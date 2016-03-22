@@ -69,7 +69,7 @@ while 1:
 
     if irc_msg.find("/NAMES") != -1:
         connectedFlag = True
-        print("Connected to channel " + channel + ".")
+        print("[" + time.strftime("%H:%M:%S") + "] Connected to channel " + channel + ".")
         continue
 
     if connectedFlag:
@@ -110,7 +110,5 @@ while 1:
                 if len(commandList) > 1: # skip if more arguments
                     continue
                 commandMessageQuery = db.commands.find({"name": commandList[0]})
-                if commandMessageQuery.count() == 0:
-                    send_message("Prikaz " + commandList[0] + " neexistuje.")
-                else:
+                if commandMessageQuery.count() > 0:
                     send_message(commandMessageQuery.distinct("message")[0])
