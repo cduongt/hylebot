@@ -41,6 +41,7 @@ channel = "#hylebus"
 botnick = "hylebot"
 oauthfile = open("oauth.txt", "r") # oauth token is stored in another file for security purposes
 modsfile = open("mods.txt", "r") # mod list, file solution until I add it into mongo
+logfile = open("log.txt", "a") # log file
 oauth = oauthfile.read()
 mods = modsfile.read().splitlines()
 oauthfile.close()
@@ -53,7 +54,6 @@ irc_socket.send(bytes("USER " + botnick + " " + botnick + " " + botnick +"\n", "
 irc_socket.send(bytes("NICK Hylebot\n", "UTF-8"))
 irc_socket.send(bytes("JOIN " + channel + "\n", "UTF-8"))
 
-connectedFlag = False # flag if bot is fully connected to channel
 
 ###########################################################
 ## Main loop for receiving messages and parsing commands ##
@@ -63,17 +63,18 @@ while 1:
     irc_msg = irc_socket.recv(1024).decode("UTF-8")
     irc_msg = irc_msg.strip("\n\r:") # strip extra whitescape
 
+    logfile.write(time.strftime("%d.%m.%Y %H:%M:%S") + " " + irc_msg + "\n") # log every received message to log file
+
     if irc_msg.find("PING") != -1: # need to keep connection alive
-        irc_socket.send(bytes("PONG " + irc_msg.split() [1] + "\n", "UTF-8"))
+        irc_socket.send(bytes("PONG tmi.twitch.tv\r\n", "UTF-8"))
         continue
 
     if irc_msg.find("/NAMES") != -1:
-        connectedFlag = True
         print("[" + time.strftime("%H:%M:%S") + "] Connected to channel " + channel + ".")
         continue
 
-    if connectedFlag:
-        line = IrcMessage(irc_msg) # parse received message, active only after bot is fully connected
+    if irc_msg.find("PRIVMSG") != -1:
+        line = IrcMessage(irc_msg) # parse received message, active only for PRIVMSG messages
         print("[" + time.strftime("%H:%M:%S") + "] " + line.sender + ": " + line.message) # output messages to console
         if line.message.startswith("!"): # parsing channel commands
             if line.message.startswith("!add") and line.sender in mods: # adding new command from chat
@@ -112,3 +113,5 @@ while 1:
                 commandMessageQuery = db.commands.find({"name": commandList[0]})
                 if commandMessageQuery.count() > 0:
                     send_message(commandMessageQuery.distinct("message")[0])
+    else:
+        print(irc_msg) # for now just print unparsed non-PRIVMSG messages to output
