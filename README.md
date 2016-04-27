@@ -5,5 +5,5 @@ Hylebot is written in Python 3 and currently is run as console application.
 
 ## Requirements
 Python 3+  
-MongoDB 3.0+
+MongoDB 3.0+  
 PyMongo 3.0+
